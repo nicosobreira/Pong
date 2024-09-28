@@ -19,7 +19,7 @@ def main(stdscr):
     curses.noecho()
     curses.curs_set(0)
     stdscr.nodelay(True)
-    stdscr.clearok(True)
+    # stdscr.clearok(True)
 
     def drawBox(scr, x=0, y=0, sx=1, sy=1, ch="*"):
         """ Draw a full box
@@ -36,7 +36,7 @@ def main(stdscr):
     def onRenderFrame(*args):
         cols, rows = stdscr.getmaxyx()
         
-        # stdscr.clear()
+        stdscr.erase()
         drawBox(stdscr, rows//2, (cols//2)-3, x_bola, y_bola)
         stdscr.addstr(5, 5, f"Key: {key}")
         stdscr.refresh()
@@ -44,7 +44,7 @@ def main(stdscr):
     def onUpdateFrame(*args):
         global x_bola
         global key
-        # x_bola += 1
+        x_bola += 1
         key = stdscr.getch()
         if key == ord("q"):
             global game

@@ -1,57 +1,105 @@
-from curses import wrapper
+import random
+import curses
+from curses import textpad
 
-""" Grid System
-Toda string tem que ser exibida com o eixo x que parece ser dobrada. Isso é por causa do aspect ratio (ex.: 1:2) por causa disso é necessário aumentar o eixo x, o eixo y se mantém intacto.
-Um exemplo de como o Grid System funciona:
-    ***       * * *
-    ***  -->  * * *
-    ***       * * *
-"""
+OPPOSITE_DIRECTION_DICT = {
+    curses.KEY_UP: curses.KEY_DOWN,
+    curses.KEY_DOWN: curses.KEY_UP,
+    curses.KEY_RIGHT: curses.KEY_LEFT,
+    curses.KEY_LEFT: curses.KEY_RIGHT
+}
 
-def drawBoxPoints(scr, x=0, y=0, dx=1, dy=1, ch="*"):
-    scr.addstr(y, x, ch)
-    scr.addstr(y, x + dx * 2, ch)
-    scr.addstr(y + dy, x, ch)
-    scr.addstr(y + dy, x + dx * 2, ch)
+DIRECTIONS_LIST = [curses.KEY_RIGHT, curses.KEY_LEFT, curses.KEY_DOWN, curses.KEY_UP]
 
 
-def drawLine(scr, p1=[0, 0], p2=[1, 0], ch="*"):
-    x1 = p1[0] + 1
-    y1 = p1[1]
-    x2 = p2[0] + 1
-    y2 = p2[1]
-    for j in range(y1, y2+y1):
-        for i in range(x1, x2+x1+2):
-            scr.addstr(j, i, ch)
+def create_food(snake, box):
+	"""Simple function to find coordinates of food which is inside box and not on snake body"""
+	food = None
+	while food is None:
+		food = [random.randint(box[0][0]+1, box[1][0]-1), 
+		random.randint(box[0][1]+1, box[1][1]-1)]
+		if food in snake:
+			food = None
+	return food
 
-def drawBox_2(scr, x=0, y=0, dx=1, dy=1, ch="*"):
-    x += 1
-    for j in range(y, dy+1):
-        for i in range(x, dx+2, 2):
-            if j == y:
-                scr.addstr(j, i, ch)
-
-def drawBoxFull(scr, x=0, y=0, dx=1, dy=1, ch="*"):
-    """ Draw a full box
-    Arguments:
-        x, y    - start position (int)
-        dx, dy  - lenght and height of the box (int)
-        ch      - character to draw the box (str)
-    """
-    for j in range(y, dy+y):
-        # O "dx + y + 3" é por causa do Grid System, as medidas são maiores para x do que para y
-        for i in range(x, dx+(dx-1)+x, 2):
-            scr.addstr(j, i, ch)
 
 def main(stdscr):
-    stdscr.clear()
-    # drawBox_1(stdscr, 3, 5, 2, 2)
-    # drawBox_2(stdscr, dx=2, dy=2)
-    drawBoxFull(stdscr, 3, 3, dx=3, dy=6)
-    # drawLine(stdscr, p1=[1, 1])
-    stdscr.refresh()
-    stdscr.getkey()
+	# initial settings
+	curses.curs_set(0)
+	stdscr.nodelay(1)
+	stdscr.timeout(100)
 
+	# create a game box
+	sh, sw = stdscr.getmaxyx()
+	box = [[3,3], [sh-3, sw-3]]  # [[ul_y, ul_x], [dr_y, dr_x]]
+	textpad.rectangle(stdscr, box[0][0], box[0][1], box[1][0], box[1][1])
+	
+	# create snake and set initial direction
+	snake = [[sh//2, sw//2+1], [sh//2, sw//2], [sh//2, sw//2-1]]
+	direction = curses.KEY_RIGHT
 
-if __name__ == "__main__":
-    wrapper(main)
+	# draw snake
+	for y,x in snake:
+		stdscr.addstr(y, x, '#')
+
+	# create food
+	food = create_food(snake, box)
+	stdscr.addstr(food[0], food[1], '*')
+
+	# print score
+	score = 0
+	score_text = "Score: {}".format(score)
+	stdscr.addstr(1, sw//2 - len(score_text)//2, score_text)
+
+	while 1:
+		# non-blocking input
+		key = stdscr.getch()
+
+		# set direction if user pressed any arrow key and that key is not opposite of current direction
+        if key in DIRECTIONS_LIST and key != OPPOSITE_DIRECTION_DICT[direction]:
+            direction = key
+
+		# find next position of snake head
+		head = snake[0]
+		if direction == curses.KEY_RIGHT:
+			new_head = [head[0], head[1]+1]
+		elif direction == curses.KEY_LEFT:
+			new_head = [head[0], head[1]-1]
+		elif direction == curses.KEY_DOWN:
+			new_head = [head[0]+1, head[1]]
+		elif direction == curses.KEY_UP:
+			new_head = [head[0]-1, head[1]]
+
+		# insert and print new head
+		stdscr.addstr(new_head[0], new_head[1], '#')
+		snake.insert(0, new_head)
+		
+		# if sanke head is on food
+		if snake[0] == food:
+			# update score
+			score += 1
+			score_text = "Score: {}".format(score)
+			stdscr.addstr(1, sw//2 - len(score_text)//2, score_text)
+			
+			# create new food
+			food = create_food(snake, box)
+			stdscr.addstr(food[0], food[1], '*')
+
+			# increase speed of game
+			stdscr.timeout(100 - (len(snake)//3)%90)
+		else:
+			# shift snake's tail
+			stdscr.addstr(snake[-1][0], snake[-1][1], ' ')
+			snake.pop()
+
+		# conditions for game over
+		if (snake[0][0] in [box[0][0], box[1][0]] or 
+			snake[0][1] in [box[0][1], box[1][1]] or 
+			snake[0] in snake[1:]):
+			msg = "Game Over!"
+			stdscr.addstr(sh//2, sw//2-len(msg)//2, msg)
+			stdscr.nodelay(0)
+			stdscr.getch()
+			break
+
+curses.wrapper(main)
