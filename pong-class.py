@@ -1,4 +1,5 @@
 import curses
+from time import sleep
 
 class Game:
     def __init__(self):
@@ -17,6 +18,10 @@ class Game:
         self.sx_bola = 3
         self.sy_bola = 2
         
+        # Velocidade da bola
+        self.vx_bola = 10
+        self.vy_bola = 10
+        
         # Coordenada da bola
         self.x_bola = self.rows//2
         self.y_bola = (self.cols//2)-3
@@ -25,7 +30,6 @@ class Game:
         self.key = ""
 
         
-
     def drawBox(self, x=0, y=0, sx=1, sy=1, ch="*"):
         """ Draw a full box
         Arguments:
@@ -38,14 +42,21 @@ class Game:
             for i in range(x, sx+x, 2):
                 self.stdscr.addstr(j, i, ch)
 
-    def onRenderFrame(self):
-        # stdscr.clear()
-        self.drawBox(self.x_bola, self.y_bola, self.sx_bola, self.sy_bola)
-        self.stdscr.addstr(5, 9, f"Key: {self.key}")
-        self.stdscr.refresh()
-   
     def onUpdateFrame(self):
-        # self.x_bola += 1
+        sleep(0.25)
+        
+        # Colisão direita e esquerda
+        if self.x_bola + self.vx_bola < self.rows and self.x_bola + self.vx_bola > 0:
+            self.x_bola += self.vx_bola
+        else:
+            self.vx_bola = -self.vx_bola
+
+        # Colisão cima e baixo
+        if self.y_bola - self.vy_bola > 0 and self.y_bola + self.vy_bola < self.cols:
+            self.y_bola += self.vy_bola
+        else:
+            self.vy_bola = -self.vy_bola
+
         self.key = self.stdscr.getch()
         try:
             self.key=chr(self.key)
@@ -54,10 +65,16 @@ class Game:
         if self.key == "q":
             self.state = False
     
+    def onRenderFrame(self):
+        # stdscr.clear()
+        self.drawBox(self.x_bola, self.y_bola, self.sx_bola, self.sy_bola)
+        self.stdscr.addstr(5, 9, f"Key: {self.key}")
+        self.stdscr.refresh()
+   
     def main(self, stdscr):
         while self.state:
-            self.onRenderFrame()
             self.onUpdateFrame()
+            self.onRenderFrame()
 
 if __name__ == "__main__":
     game = Game()
