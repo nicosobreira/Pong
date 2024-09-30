@@ -47,6 +47,9 @@ class Game:
         self.color_player = 2
         self.color_score = 1
         
+        # Caracter da bola
+        self.char_bola = "o"
+
         # Tamanho da bola
         self.sx_bola = 3
         self.sy_bola = 2
@@ -88,7 +91,7 @@ class Game:
     def printScore(self):
         self.stdscr.addstr()
 
-    def onUpdateFrame(self):
+    def Update(self):
         self.x_bola += self.vx_bola
         self.y_bola += self.vy_bola
         
@@ -139,32 +142,28 @@ class Game:
         if self.key == 113: # q
             self.state = False
     
-    def onRenderFrame(self):
+    def Render(self):
         self.stdscr.erase()
         
         # Render bola
-        drawBox(self.stdscr, self.x_bola, self.y_bola, self.sx_bola, self.sy_bola, self.color_ball)
+        drawBox(self.stdscr, self.x_bola, self.y_bola, self.sx_bola, self.sy_bola, self.color_ball, self.char_bola)
         
         # Render player 1
         drawBox(self.stdscr, self.x_player1, self.y_player1, self.sx_player, self.sy_player, self.color_player)
         
         # Render player 2
         drawBox(self.stdscr, self.x_player2, self.y_player2, self.sx_player, self.sy_player, self.color_player)
-        # self.stdscr.addstr(5, 9, f"Key: {self.key}")
-        # self.printScore()
+        
         self.stdscr.refresh()
    
     def main(self, stdscr):
         while self.state:
-            self.onUpdateFrame()
-            self.onRenderFrame()
+            self.Update()
+            self.Render()
             
-            # Faz com que os inputs não se "arrastem"
-            curses.flushinp()
+            curses.flushinp() # Faz com que os inputs não se "arrastem"
             curses.napms(self.TICKRATE)
 
 if __name__ == "__main__":
     game = Game()
     curses.wrapper(game.main)
-
-    
