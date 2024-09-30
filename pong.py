@@ -2,6 +2,15 @@ import curses
 
 
 # TODO colocar um placar
+# TODO refatorar o código
+#      Separar o player, placar e bola em diferentes classes
+# TODO fazer com que o sx_player e sy_player sejam funções
+# TODO Fazer com que a tecla "p" pause o jogo (pesquisar se é possível)
+# TODO quando a bola bater no player fazer um efeito de faísca
+#       * * /
+#       * *o o
+#       * *o o
+#       * * \
 
 
 def drawBox(stdscr, x=0, y=0, sx=1, sy=1, color_num=0, ch="*"):
@@ -116,7 +125,7 @@ class Game:
             self.resetBall()
         
         # Cima
-        if self.y_bola - self.sy_bola > 0:
+        if self.y_bola - self.sy_bola > 3:
             self.vy_bola = -self.vy_bola
         
         # Baixo
@@ -127,15 +136,15 @@ class Game:
         self.key = self.stdscr.getch()
         
         # Player 1
-        if self.key == 119: # w
+        if self.key == 119 and self.y_player1 > 3: # w
             self.y_player1 -= self.v_player
-        if self.key == 115: # s
+        if self.key == 115 and self.y_player1 + self.sy_player < self.cols - 1: # s
             self.y_player1 += self.v_player
 
         # Player 2
-        if self.key == curses.KEY_UP:
+        if self.key == curses.KEY_UP and self.y_player2 > 3:
             self.y_player2 -= self.v_player
-        if self.key == curses.KEY_DOWN:
+        if self.key == curses.KEY_DOWN and self.y_player2 + self.sy_player < self.cols - 1:
             self.y_player2 += self.v_player
         
         # Game
