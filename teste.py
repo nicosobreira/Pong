@@ -1,105 +1,129 @@
-import random
 import curses
-from curses import textpad
 
-OPPOSITE_DIRECTION_DICT = {
-    curses.KEY_UP: curses.KEY_DOWN,
-    curses.KEY_DOWN: curses.KEY_UP,
-    curses.KEY_RIGHT: curses.KEY_LEFT,
-    curses.KEY_LEFT: curses.KEY_RIGHT
-}
+def drawBox(stdscr, x=0, y=0, sx=1, sy=1, color=curses.color_pair(0), ch="*"):
+    """ Draw a full box
+    Arguments:
+        scr     - screen (window) to draw
+        x, y    - start position (int)
+        sx, sy  - length and height of the box (int)
+        ch      - character to draw the box (str)
+    """
+    for j in range(y, sy+y):
+        for i in range(x, sx+x, 2):
+            stdscr.addstr(j, i, ch)
 
-DIRECTIONS_LIST = [curses.KEY_RIGHT, curses.KEY_LEFT, curses.KEY_DOWN, curses.KEY_UP]
+class Game:
+    def __init__(self):
+        # Inicia a janela
+        self.stdscr = curses.initscr()
+        self.stdscr.nodelay(True)
+        curses.cbreak()
+        curses.noecho()
+        curses.curs_set(0)
+        
+        self.TICKRATE = 50
+        self.cols, self.rows = self.stdscr.getmaxyx()
+        self.state = True
+        
+        # Tamanho da bola
+        self.sx_bola = 3
+        self.sy_bola = 2
+        
+        # Velocidade da bola
+        self.vx_bola = -1
+        self.vy_bola = 1
+        
+        # Coordenada da bola
+        self.x_bola = self.rows//2
+        self.y_bola = (self.cols//2) - self.sy_bola
 
+        # Tamanho dos players
+        self.sx_player = self.sx_bola
+        self.sy_player = self.sy_bola * 3
+        
+        # Velocidade dos players
+        self.v_player = 1
+        
+        # Coordenada dos players
+        self.x_player1 = 3
+        self.y_player1 = (self.cols//2) - self.sy_player
+        self.x_player2 = self.rows - self.sx_player - 3
+        self.y_player2 = (self.cols//2) - self.sy_player 
+        
+        # Pontos
+        self.score1 = 0
+        self.score2 = 0
+        
+        # Input
+        self.key = ""
 
-def create_food(snake, box):
-	"""Simple function to find coordinates of food which is inside box and not on snake body"""
-	food = None
-	while food is None:
-		food = [random.randint(box[0][0]+1, box[1][0]-1), 
-		random.randint(box[0][1]+1, box[1][1]-1)]
-		if food in snake:
-			food = None
-	return food
+    def resetBall(self):
+        self.x_bola = self.rows//2
+        self.y_bola = (self.cols//2)-3
 
+    def printScore(self):
+        self.stdscr.addstr()
 
-def main(stdscr):
-	# initial settings
-	curses.curs_set(0)
-	stdscr.nodelay(1)
-	stdscr.timeout(100)
+    def onUpdateFrame(self):
+        self.x_bola += self.vx_bola
+        # self.y_bola += self.vy_bola
+        
+        # Colisão bola e jogador 1
+        if (    self.x_bola < self.x_player1 + self.sx_player and
+                self.y_bola + self.sy_bola > self.y_player1 and
+                self.y_bola < self.y_player1 + self.sy_player): # Esquerdo da bola > direita do p1
+            self.vx_bola = -self.vx_bola
+        
+        # Colisão bola lados e direito e esquerdo
+        if (    self.x_bola + self.sx_bola > self.rows or
+                self.x_bola - self.sx_bola < 0):
+            self.score1 += 1
+            self.resetBall()
+        
+        # Cima
+        if self.y_bola - self.sy_bola > 0:
+            self.vy_bola = -self.vy_bola
+        
+        # Baixo
+        if self.y_bola + self.sy_bola < self.cols:
+            self.vy_bola = -self.vy_bola
+        
+        # Input
+        self.key = self.stdscr.getch()
+        
+        # Player 1
+        if self.key == 119: # w
+            self.y_player1 -= self.v_player
+        if self.key == 115: # s
+            self.y_player1 += self.v_player
+        # Game
+        if self.key == 113: # q
+            self.state = False
+    
+    def onRenderFrame(self):
+        self.stdscr.erase()
+        
+        # Render bola
+        drawBox(self.stdscr, self.x_bola, self.y_bola, self.sx_bola, self.sy_bola)
+        
+        # Render player 1
+        drawBox(self.stdscr, self.x_player1, self.y_player1, self.sx_player, self.sy_player)
+        
+        # self.stdscr.addstr(5, 9, f"Key: {self.key}")
+        # self.printScore()
+        self.stdscr.refresh()
+   
+    def main(self, stdscr):
+        while self.state:
+            self.onUpdateFrame()
+            self.onRenderFrame()
+            
+            # Faz com que os inputs não se "arrastem"
+            curses.flushinp()
+            
+            # Set o tickrate do jogo
+            curses.napms(self.TICKRATE)
 
-	# create a game box
-	sh, sw = stdscr.getmaxyx()
-	box = [[3,3], [sh-3, sw-3]]  # [[ul_y, ul_x], [dr_y, dr_x]]
-	textpad.rectangle(stdscr, box[0][0], box[0][1], box[1][0], box[1][1])
-	
-	# create snake and set initial direction
-	snake = [[sh//2, sw//2+1], [sh//2, sw//2], [sh//2, sw//2-1]]
-	direction = curses.KEY_RIGHT
-
-	# draw snake
-	for y,x in snake:
-		stdscr.addstr(y, x, '#')
-
-	# create food
-	food = create_food(snake, box)
-	stdscr.addstr(food[0], food[1], '*')
-
-	# print score
-	score = 0
-	score_text = "Score: {}".format(score)
-	stdscr.addstr(1, sw//2 - len(score_text)//2, score_text)
-
-	while 1:
-		# non-blocking input
-		key = stdscr.getch()
-
-		# set direction if user pressed any arrow key and that key is not opposite of current direction
-        if key in DIRECTIONS_LIST and key != OPPOSITE_DIRECTION_DICT[direction]:
-            direction = key
-
-		# find next position of snake head
-		head = snake[0]
-		if direction == curses.KEY_RIGHT:
-			new_head = [head[0], head[1]+1]
-		elif direction == curses.KEY_LEFT:
-			new_head = [head[0], head[1]-1]
-		elif direction == curses.KEY_DOWN:
-			new_head = [head[0]+1, head[1]]
-		elif direction == curses.KEY_UP:
-			new_head = [head[0]-1, head[1]]
-
-		# insert and print new head
-		stdscr.addstr(new_head[0], new_head[1], '#')
-		snake.insert(0, new_head)
-		
-		# if sanke head is on food
-		if snake[0] == food:
-			# update score
-			score += 1
-			score_text = "Score: {}".format(score)
-			stdscr.addstr(1, sw//2 - len(score_text)//2, score_text)
-			
-			# create new food
-			food = create_food(snake, box)
-			stdscr.addstr(food[0], food[1], '*')
-
-			# increase speed of game
-			stdscr.timeout(100 - (len(snake)//3)%90)
-		else:
-			# shift snake's tail
-			stdscr.addstr(snake[-1][0], snake[-1][1], ' ')
-			snake.pop()
-
-		# conditions for game over
-		if (snake[0][0] in [box[0][0], box[1][0]] or 
-			snake[0][1] in [box[0][1], box[1][1]] or 
-			snake[0] in snake[1:]):
-			msg = "Game Over!"
-			stdscr.addstr(sh//2, sw//2-len(msg)//2, msg)
-			stdscr.nodelay(0)
-			stdscr.getch()
-			break
-
-curses.wrapper(main)
+if __name__ == "__main__":
+    game = Game()
+    curses.wrapper(game.main)

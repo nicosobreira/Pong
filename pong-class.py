@@ -1,41 +1,34 @@
 import curses
 
 
-def drawBox(stdscr, x=0, y=0, sx=1, sy=1, ch="*"):
+def drawBox(stdscr, x=0, y=0, sx=1, sy=1, color_num=0, ch="*"):
     """ Draw a full box
     Arguments:
         scr     - screen (window) to draw
         x, y    - start position (int)
         sx, sy  - length and height of the box (int)
+        color   - color pair to be used
         ch      - character to draw the box (str)
     """
     for j in range(y, sy+y):
         for i in range(x, sx+x, 2):
-            stdscr.addstr(j, i, ch)
-
-class Player():
-    def __init__(self, x, y, sx, sy):
-        self.x_player = x
-        self.y_player = y
-        
-        # Tamanho
-        self.sx_player = sx
-        self.sy_player = sy
-        
-        # Velocidade
-        self.v_player = 1
-    
-    # def collision(self):
+            stdscr.addstr(j, i, ch, curses.color_pair(color_num))
 
 class Game:
     def __init__(self):
         # Inicia a janela
-        self.stdscr = curses.initscr()
-        self.stdscr.nodelay(True)
-        curses.cbreak()
-        curses.noecho()
-        curses.curs_set(0)
+        self.stdscr = curses.initscr() # Inicia a janela
+        self.stdscr.nodelay(True) # Se não tiver input o padrão é -1
         
+        # curses.cbreak() # 
+        curses.noecho() # Não exibe os inputs
+        curses.curs_set(0) # Não mostra o cursor
+       
+        # Color pairs
+        curses.init_pair(1, curses.COLOR_RED, curses.COLOR_BLACK)
+        curses.init_pair(2, curses.COLOR_BLUE, curses.COLOR_BLACK)
+        curses.init_pair(3, curses.COLOR_YELLOW, curses.COLOR_BLACK)
+
         self.TICKRATE = 50
         self.cols, self.rows = self.stdscr.getmaxyx()
         self.state = True
@@ -57,12 +50,12 @@ class Game:
         self.sy_player = self.sy_bola * 3
         
         # Velocidade dos players
-        self.v_player = 3
+        self.v_player = 2
         
         # Coordenada dos players
-        self.x_player1 = 0
+        self.x_player1 = 3
         self.y_player1 = (self.cols//2) - self.sy_player
-        self.x_player2 = self.rows - self.sx_player - 10
+        self.x_player2 = self.rows - self.sx_player - 3
         self.y_player2 = (self.cols//2) - self.sy_player 
         
         # Pontos
@@ -75,6 +68,7 @@ class Game:
     def resetBall(self):
         self.x_bola = self.rows//2
         self.y_bola = (self.cols//2)-3
+    
 
     def printScore(self):
         self.stdscr.addstr()
@@ -83,23 +77,24 @@ class Game:
         self.x_bola += self.vx_bola
         self.y_bola += self.vy_bola
         
-        # TODO quando a bola está em cima ou em baixo
-        # Colisão bola e jogador 2
-        if (    self.x_bola > self.x_player2 - self.sx_player and # Direira da bola > esquerda do p2
-                self.y_bola > self.y_player2 - self.sy_player and # Baixo da bola > cima do p2
-                self.y_bola - self.sy_bola < self.y_player2): # Cima da bola < baixo do p2
+        # Colisão bola e jogador 1
+        if (    self.x_bola < self.x_player1 + self.sx_player and # Esquerda da bola < direira do p1
+                self.y_bola + self.sy_bola > self.y_player1 and # Baixo da bola > cima do p1
+                self.y_bola < self.y_player1 + self.sy_player): # Cima da bola < direita do p1
             self.vx_bola = -self.vx_bola
         
-        # Colisão bola e jogador 1
-        if (    self.x_bola + self.sx_bola < self.x_player1 and # Esquerdo da bola > direita do p1
-                self.y_bola < self.y_player1 - self.sy_player and # Baixo da bola < cima do p1
-                self.y_bola - self.sy_bola > self.y_player1): # Cima da bola > baixo do p1
+        # Colisão bola e jogador 2
+        if (    self.x_bola > self.x_player2 - self.sx_player and # Direira da bola > esquerda do p2
+                self.y_bola + self.sy_bola > self.y_player2 and # Baixo da bola > cima do p2
+                self.y_bola < self.y_player2 + self.sy_player): # Cima da bola < baixo do p2
             self.vx_bola = -self.vx_bola
+        
         
         # Colisão bola lados e direito e esquerdo
         if (    self.x_bola + self.sx_bola > self.rows or
                 self.x_bola - self.sx_bola < 0):
             self.score1 += 1
+            self.vx_bola = -self.vx_bola
             self.resetBall()
         
         # Cima
