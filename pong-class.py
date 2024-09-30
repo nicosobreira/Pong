@@ -1,7 +1,5 @@
 import curses
-from time import sleep
 
-TICKRATE = 50
 
 def drawBox(stdscr, x=0, y=0, sx=1, sy=1, ch="*"):
     """ Draw a full box
@@ -38,6 +36,7 @@ class Game:
         curses.noecho()
         curses.curs_set(0)
         
+        self.TICKRATE = 50
         self.cols, self.rows = self.stdscr.getmaxyx()
         self.state = True
         
@@ -51,20 +50,20 @@ class Game:
         
         # Coordenada da bola
         self.x_bola = self.rows//2
-        self.y_bola = (self.cols//2)-3
-        
+        self.y_bola = (self.cols//2) - self.sy_bola
+
         # Tamanho dos players
         self.sx_player = self.sx_bola
         self.sy_player = self.sy_bola * 3
         
         # Velocidade dos players
-        self.v_player = 1
+        self.v_player = 3
         
         # Coordenada dos players
         self.x_player1 = 0
-        self.y_player1 = self.cols//2
-        self.x_player2 = self.rows - self.sx_player
-        self.y_player2 = self.cols//2
+        self.y_player1 = (self.cols//2) - self.sy_player
+        self.x_player2 = self.rows - self.sx_player - 10
+        self.y_player2 = (self.cols//2) - self.sy_player 
         
         # Pontos
         self.score1 = 0
@@ -84,18 +83,23 @@ class Game:
         self.x_bola += self.vx_bola
         self.y_bola += self.vy_bola
         
-        if self.x_bola < self.x_player2 - self.sx_player:
+        # TODO quando a bola está em cima ou em baixo
+        # Colisão bola e jogador 2
+        if (    self.x_bola > self.x_player2 - self.sx_player and # Direira da bola > esquerda do p2
+                self.y_bola > self.y_player2 - self.sy_player and # Baixo da bola > cima do p2
+                self.y_bola - self.sy_bola < self.y_player2): # Cima da bola < baixo do p2
             self.vx_bola = -self.vx_bola
         
-        # Colisão da bola
-        # Direita
-        if self.x_bola + self.sx_bola < self.rows:
-            self.score1 += 1
-            self.resetBall()
+        # Colisão bola e jogador 1
+        if (    self.x_bola + self.sx_bola < self.x_player1 and # Esquerdo da bola > direita do p1
+                self.y_bola < self.y_player1 - self.sy_player and # Baixo da bola < cima do p1
+                self.y_bola - self.sy_bola > self.y_player1): # Cima da bola > baixo do p1
+            self.vx_bola = -self.vx_bola
         
-        # Esquerda
-        if self.x_bola - self.sx_bola > 0:
-            self.score2 += 1
+        # Colisão bola lados e direito e esquerdo
+        if (    self.x_bola + self.sx_bola > self.rows or
+                self.x_bola - self.sx_bola < 0):
+            self.score1 += 1
             self.resetBall()
         
         # Cima
@@ -127,8 +131,14 @@ class Game:
     
     def onRenderFrame(self):
         self.stdscr.erase()
+        
+        # Render bola
         drawBox(self.stdscr, self.x_bola, self.y_bola, self.sx_bola, self.sy_bola)
+        
+        # Render player 1
         drawBox(self.stdscr, self.x_player1, self.y_player1, self.sx_player, self.sy_player)
+        
+        # Render player 2
         drawBox(self.stdscr, self.x_player2, self.y_player2, self.sx_player, self.sy_player)
         # self.stdscr.addstr(5, 9, f"Key: {self.key}")
         # self.printScore()
@@ -141,7 +151,7 @@ class Game:
             
             # Faz com que os inputs não se "arrastem"
             curses.flushinp()
-            curses.napms(TICKRATE)
+            curses.napms(self.TICKRATE)
 
 if __name__ == "__main__":
     game = Game()
