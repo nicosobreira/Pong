@@ -14,9 +14,8 @@ def drawBox(stdscr, x=0, y=0, sx=1, sy=1, color=curses.color_pair(0), ch="*"):
 
 class Game:
     def __init__(self):
-        # Inicia a janela
-        self.stdscr = curses.initscr()
-        self.stdscr.nodelay(True)
+        self.stdscr = curses.initscr() # Inicia a janela
+        self.stdscr.nodelay(True) # 
         curses.cbreak()
         curses.noecho()
         curses.curs_set(0)

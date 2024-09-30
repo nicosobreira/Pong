@@ -1,6 +1,9 @@
 import curses
 
 
+# TODO colocar um placar
+
+
 def drawBox(stdscr, x=0, y=0, sx=1, sy=1, color_num=0, ch="*"):
     """ Draw a full box
     Arguments:
@@ -20,18 +23,29 @@ class Game:
         self.stdscr = curses.initscr() # Inicia a janela
         self.stdscr.nodelay(True) # Se não tiver input o padrão é -1
         
+        # Set color
+        curses.start_color()
+        curses.use_default_colors()
+
         # curses.cbreak() # 
         curses.noecho() # Não exibe os inputs
         curses.curs_set(0) # Não mostra o cursor
        
         # Color pairs
-        curses.init_pair(1, curses.COLOR_RED, curses.COLOR_BLACK)
-        curses.init_pair(2, curses.COLOR_BLUE, curses.COLOR_BLACK)
-        curses.init_pair(3, curses.COLOR_YELLOW, curses.COLOR_BLACK)
+        curses.init_pair(1, 2, -1) # Green 
+        curses.init_pair(2, 3, -1) # Yellow
+        curses.init_pair(3, 4, -1) # Blue
 
+
+        self.state = True
+        
         self.TICKRATE = 50
         self.cols, self.rows = self.stdscr.getmaxyx()
-        self.state = True
+        
+        # Color pairs
+        self.color_ball = 3
+        self.color_player = 2
+        self.color_score = 1
         
         # Tamanho da bola
         self.sx_bola = 3
@@ -44,6 +58,7 @@ class Game:
         # Coordenada da bola
         self.x_bola = self.rows//2
         self.y_bola = (self.cols//2) - self.sy_bola
+
 
         # Tamanho dos players
         self.sx_player = self.sx_bola
@@ -128,13 +143,13 @@ class Game:
         self.stdscr.erase()
         
         # Render bola
-        drawBox(self.stdscr, self.x_bola, self.y_bola, self.sx_bola, self.sy_bola)
+        drawBox(self.stdscr, self.x_bola, self.y_bola, self.sx_bola, self.sy_bola, self.color_ball)
         
         # Render player 1
-        drawBox(self.stdscr, self.x_player1, self.y_player1, self.sx_player, self.sy_player)
+        drawBox(self.stdscr, self.x_player1, self.y_player1, self.sx_player, self.sy_player, self.color_player)
         
         # Render player 2
-        drawBox(self.stdscr, self.x_player2, self.y_player2, self.sx_player, self.sy_player)
+        drawBox(self.stdscr, self.x_player2, self.y_player2, self.sx_player, self.sy_player, self.color_player)
         # self.stdscr.addstr(5, 9, f"Key: {self.key}")
         # self.printScore()
         self.stdscr.refresh()
