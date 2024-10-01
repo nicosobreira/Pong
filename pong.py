@@ -136,6 +136,7 @@ class Game:
         self.key = self.stdscr.getch()
         
         # Player 1
+        # TODO quando o player for para baixo: self.y_playerx + self.sy_player + self.v_player < self.cols
         if self.key == 119 and self.y_player1 > 3: # w
             self.y_player1 -= self.v_player
         if self.key == 115 and self.y_player1 + self.sy_player < self.cols - 1: # s
