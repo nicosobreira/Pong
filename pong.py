@@ -1,7 +1,6 @@
 import curses
 
 
-# TODO colocar um placar
 # TODO refatorar o código
 #      Separar o player, placar e bola em diferentes classes
 # TODO fazer com que o sx_player e sy_player sejam funções
@@ -50,7 +49,7 @@ class Game:
         
         self.TICKRATE = 50
         self.cols, self.rows = self.stdscr.getmaxyx()
-        
+
         # Color pairs
         self.color_ball = 3
         self.color_player = 2
@@ -86,19 +85,19 @@ class Game:
         self.y_player2 = (self.cols//2) - self.sy_player 
         
         # Pontos
-        self.score1 = 0
-        self.score2 = 0
+        self.score1 = self.score2 = 0
         
         # Input
         self.key = ""
 
     def resetBall(self):
         self.x_bola = self.rows//2
-        self.y_bola = (self.cols//2)-3
-    
+        self.y_bola = (self.cols//2) - self.sy_bola
+        self.vx_bola = -self.vx_bola
 
     def printScore(self):
-        self.stdscr.addstr()
+        score_str = f"{self.score1} | {self.score2}"
+        self.stdscr.addstr(1, self.rows//2 - len(score_str), score_str, self.color_score)
 
     def Update(self):
         self.x_bola += self.vx_bola
@@ -116,36 +115,46 @@ class Game:
                 self.y_bola < self.y_player2 + self.sy_player): # Cima da bola < baixo do p2
             self.vx_bola = -self.vx_bola
         
-        
-        # Colisão bola lados e direito e esquerdo
-        if (    self.x_bola + self.sx_bola > self.rows or
-                self.x_bola - self.sx_bola < 0):
+        # Direira da bola > parte da direita game
+        if self.x_bola + self.sx_bola > self.rows - 2: 
             self.score1 += 1
-            self.vx_bola = -self.vx_bola
             self.resetBall()
         
-        # Cima
-        if self.y_bola - self.sy_bola > 3:
+        # Esquerda da bola < parte da esquerda game
+        if self.x_bola - self.sx_bola < 2: 
+            self.score2 += 1
+            self.resetBall()
+        
+        # Cima da bola > parte de cima game
+        if self.y_bola - self.sy_bola > 1: 
+            self.vy_bola = -self.vy_bola
+       
+        # Baixo da bola < parte de baixo game
+        if self.y_bola + self.sy_bola < self.cols: 
             self.vy_bola = -self.vy_bola
         
         # Baixo
-        if self.y_bola + self.sy_bola < self.cols:
-            self.vy_bola = -self.vy_bola
+        # if self.y_bola + self.sy_bola < self.cols:
+        #     self.vy_bola = -self.vy_bola
         
         # Input
         self.key = self.stdscr.getch()
         
         # Player 1
         # TODO quando o player for para baixo: self.y_playerx + self.sy_player + self.v_player < self.cols
-        if self.key == 119 and self.y_player1 > 3: # w
+        if (    self.key == 119 and
+                self.y_player1 - self.v_player > 2): # w
             self.y_player1 -= self.v_player
-        if self.key == 115 and self.y_player1 + self.sy_player < self.cols - 1: # s
+        if (    self.key == 115 and
+                self.y_player1 + self.sy_player + self.v_player < self.cols): # s
             self.y_player1 += self.v_player
 
         # Player 2
-        if self.key == curses.KEY_UP and self.y_player2 > 3:
+        if (    self.key == curses.KEY_UP and
+                self.y_player2 - self.v_player > 2):
             self.y_player2 -= self.v_player
-        if self.key == curses.KEY_DOWN and self.y_player2 + self.sy_player < self.cols - 1:
+        if (    self.key == curses.KEY_DOWN and
+                self.y_player2 + self.sy_player + self.v_player < self.cols):
             self.y_player2 += self.v_player
         
         # Game
@@ -155,18 +164,21 @@ class Game:
     def Render(self):
         self.stdscr.erase()
         
-        # Render bola
+        # Score
+        self.printScore()
+
+        # Bola
         drawBox(self.stdscr, self.x_bola, self.y_bola, self.sx_bola, self.sy_bola, self.color_ball, self.char_bola)
         
-        # Render player 1
+        # Player 1
         drawBox(self.stdscr, self.x_player1, self.y_player1, self.sx_player, self.sy_player, self.color_player)
         
-        # Render player 2
+        # Player 2
         drawBox(self.stdscr, self.x_player2, self.y_player2, self.sx_player, self.sy_player, self.color_player)
         
         self.stdscr.refresh()
    
-    def main(self, stdscr):
+    def loop(self, stdscr):
         while self.state:
             self.Update()
             self.Render()
@@ -176,4 +188,4 @@ class Game:
 
 if __name__ == "__main__":
     game = Game()
-    curses.wrapper(game.main)
+    curses.wrapper(game.loop)
