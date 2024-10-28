@@ -1,34 +1,38 @@
+import curses
+
+from Vector import Vector
+from Entity import Entity
+
 import utils
 
 
-class Ball:
-    def __init__(self, scr, x: int, y: int, sx: int, sy: int, ch="o", color=0) -> None:
-        self.scr = scr
+class Ball(Entity):
+    def __init__(self, scr,
+                 pos: Vector,
+                 size: Vector,
+                 vel: Vector,
+                 collision: bool,
+                 ch: str, color: int) -> None:
+        super().__init__(scr, pos, size, vel, ch, color)
         
-        # Coordenadas
-        self.x = x
-        self.y = y
-        
-        # Tamanho
-        self.sx = sx
-        self.sy = sy
-        
-        # Velocidade
-        self.vx = 1
-        self.vy = 1
-        
-        # Render
-        self.ch = ch
-        self.color = color
+        self.collision = collision
 
-        self.collision = False
-    
+    @classmethod
+    def spawn(cls, scr, ch: str = "o", color: int = 0) -> None:
+        pos = Vector(curses.COLS, curses.LINES)
+        size = Vector(3, 2)
+        vel = Vector(1, 2)
+        collision = False
+        return cls(scr, pos, size, vel, collision, ch, color)
 
-    def reset(self, rows, cols):
-        self.x = (rows // 2) - self.sx
-        self.y = cols // 2
-        self.vx = -self.vx
+    def reset(self) -> None:
+        self.pos.x = curses.COLS // 2 - self.size.x
+        self.pos.y = curses.LINES // 2
+        self.vel.x = -self.vel.x
  
- 
-    def render(self):
-        utils.drawRect(self.scr, self.x, self.y, self.sx, self.sy, self.ch, self.color)
+    def update(self) -> None:
+        self.pos.x += self.vel.x
+        self.pos.y += self.vel.y
+
+    def render(self) -> None:
+        super().render()

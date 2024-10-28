@@ -1,40 +1,33 @@
+import curses
+
+from Vector import Vector
+from Entity import Entity
+
 import utils
 
 
-class Player:
-    def __init__(self, scr, KEYS: dict, x: int, y: int, sx: int, sy: int, ch="*", color=0) -> None:
-        self.scr = scr
+class Player(Entity):
+    def __init__(self, scr,
+                 keys: dict,
+                 pos: Vector,
+                 size: Vector,
+                 vel: Vector = Vector(5, 0),
+                 ch="*", color=0) -> None:
+        super().__init__(scr, pos, size, vel, ch, color)
         
         # Dicionário das teclas
-        self.KEYS = KEYS
-        
-        # Posição
-        self.x = x
-        self.y = y
-
-        # Tamanho
-        self.sx = sx
-        self.sy = sy
-
-        # Velocidade
-        self.v = 2
-       
-        # Render
-        self.ch = ch
-        self.color = color
+        self.keys = keys
 
         self.score = 0
 
+    def input(self, key: int) -> None:
+        if (    key == self.keys["up"] and
+                self.pos.y - self.vel.y > 2):
+            self.pos.y -= self.vel.y * 0.001
+
+        if (    key == self.keys["down"] and
+                self.pos.y + self.size.y + self.vel.y < curses.COLS):
+            self.pos.y += self.vel.y * 0.001
 
     def render(self):
-        utils.drawRect(self.scr, self.x, self.y, self.sx, self.sy, self.ch, self.color)
-
-
-    def input(self, key, cols):
-        if (    key == self.KEYS["up"] and
-                self.y - self.v > 2):
-            self.y -= self.v
-
-        if (    key == self.KEYS["down"] and
-                self.y + self.sy + self.v < cols):
-            self.y += self.v
+        super().render()
