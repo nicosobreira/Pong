@@ -2,7 +2,7 @@
 
 Essa é mais umas das muitas releituras do jogo Pong.
 Feito usando Python e a biblioteca curses.
-Execute o arquvo `pong.py` para jogar.
+Execute o arquvo `main.py` para jogar.
 
 ## Curses
 
