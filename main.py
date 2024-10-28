@@ -2,24 +2,51 @@ import curses
 import time
 
 import utils
-import collision as col
+from collision import *
 
 from Vector import Vector
 from Ball import Ball
 from Player import Player
+from Window import Window
+
+
+def convertRgb(rgb) -> int:
+    return rgb * 1000 // 255
 
 
 class Game:
-    def __init__(self, stdscr) -> None:
+    def __init__(self, stdscr: int) -> None:
         self.stdscr = stdscr
 
-        # Set color
-        curses.start_color()
-        curses.use_default_colors()
+        # Set new color (with rgb)
+        if curses.can_change_color():
+            curses.init_color(2, # Green
+                convertRgb(32),
+                convertRgb(227),
+                convertRgb(178),
+            )
+            curses.init_color(3, # Orange
+                convertRgb(237),
+                convertRgb(171),
+                convertRgb(101)
+            )
+            curses.init_color(4, # Blue
+                convertRgb(44),
+                convertRgb(203),
+                convertRgb(254)
+            )
+        
+        # Color pairs
+        if curses.has_colors():
+            curses.use_default_colors()
+            
+            # Color pairs
+            curses.init_pair(1, 2, -1)  # Green
+            curses.init_pair(2, 3, -1)  # Yellow
+            curses.init_pair(3, 4, -1)  # Blue
 
-        # curses.cbreak() #
         curses.noecho()  # Não exibe os inputs
-        curses.cbreak()
+        # curses.cbreak()
         curses.curs_set(0)  # Não mostra o cursor
 
         curses.set_escdelay(1)  # Pressionar ESC não "pausa" o jogo
@@ -27,94 +54,111 @@ class Game:
         self.stdscr.nodelay(True)  # Se não tiver input o padrão é -1
         self.stdscr.keypad(True)
 
-        # Color pairs
-        curses.init_pair(1, 2, -1)  # Green
-        curses.init_pair(2, 3, -1)  # Yellow
-        curses.init_pair(3, 4, -1)  # Blue
-
+        # Game
         self.state = True
         self.pause = False
 
         self.TICKRATE = 50
 
-        self.KEYS = {"quit": (113, 27), # q and ESC
-                     "pause": 112} # p
+        self.KEYS = {
+            "quit": 113, # q
+            "pause": 112 # p
+        }
 
-        self.ball = Ball.spawn(self.stdscr)
+        self.panel = Window(
+            left=0,
+            right=curses.COLS,
+            up=0,
+            down=2
+        )
 
-        self.player1 = Player(self.stdscr,
-                              keys={"up": 119, "down": 115},
-                              pos=Vector(3, curses.LINES//2 - self.ball.size.y * 3),
-                              size=Vector(self.ball.size.x, self.ball.size.y * 3),
-                              ch="%", color=2)
+        self.board = Window(
+            left=self.panel.left,
+            right=self.panel.right,
+            up=self.panel.down,
+            down=curses.LINES
+        )
 
-        self.player2 = Player(self.stdscr,
-                              keys={"up": curses.KEY_UP, "down": curses.KEY_DOWN},
-                              pos=Vector(curses.COLS - 3 - self.ball.size.x - 3,
-                                         curses.LINES//2 - self.ball.size.y * 3),
-                              size=Vector(self.ball.size.x, self.ball.size.y * 3),
-                              ch="%", color=2)
+        self.ball = Ball.spawn(self.stdscr, self.board, color=3)
 
-    def printScore(self) -> None:
-        score_str = f"{self.player1.score} | {self.player2.score}"
-        utils.addstr(self.stdscr, self.rows//2 -
-                     len(score_str), 0, score_str, 1)
-        for i in range(0, self.rows):
-            utils.addstr(self.stdscr, i, 1, "-")
+        player_offset_x = 3
+        self.player1 = Player(
+            self.stdscr,
+            KEYS={"up": 119, "down": 115},
+            pos=Vector(
+                player_offset_x,
+                self.board.middle_y - self.ball.size.y * 3
+            ),
+            size=Vector(
+                self.ball.size.x,
+                self.ball.size.y * 3
+            ),
+            ch="%", color=2
+        )
+
+        self.player2 = Player(
+            self.stdscr,
+            KEYS={"up": curses.KEY_UP, "down": curses.KEY_DOWN},
+            pos=Vector(
+                self.board.right - self.ball.size.x - player_offset_x,
+                self.board.middle_y - self.ball.size.y * 3
+            ),
+            size=Vector(
+                self.ball.size.x,
+                self.ball.size.y * 3
+            ),
+            ch="%", color=2
+        )
 
     def input(self) -> None:
         key = self.stdscr.getch()
-        if key in self.KEYS["quit"]:
+        if key == self.KEYS["quit"]:
             self.state = False
-        elif key == self.KEYS["pause"]:
+        key = self.stdscr.getch()
+        if key == self.KEYS["pause"]:
             self.pause = not self.pause
 
-        self.player1.input(key)
-        self.player2.input(key)
-
     def update(self) -> None:
-        if not self.pause:
-            self.ball.update()
+        self.player1.input(self.board)
+        self.player2.input(self.board)
+        
+        self.ball.update()
 
-            # Colisão bola e jogador 1
-            if isCollidingX(self.ball, self.player1):
-                self.ball.vel.x *= -1
-                self.ball.collision = True
+        # Colisão bola e jogador 1
+        if isCollidingEntityX(self.ball, self.player1):
+            self.ball.vel.x *= -1
 
-            # Colisão bola e jogador 2
-            if (self.ball.x > self.player2.x - self.player2.sx and  # Direira da bola > esquerda do p2
-                    self.ball.y + self.ball.sx > self.player2.y and  # Baixo da bola > cima do p2
-                    self.ball.y < self.player2.y + self.player2.sy):  # Cima da bola < baixo do p2
-                self.ball.vx = -self.ball.vx
-                self.ball.collison = True
+        # Colisão bola e jogador 2
+        if isCollidingEntityX(self.ball, self.player2):
+            self.ball.vel.x *= -1
 
-            # Cima da bola > parte de cima game
-            if self.ball.y - self.ball.sy > 0:
-                self.ball.vy = -self.ball.vy
+        if ( isCollidingEntityBoardUp(self.ball, self.board) or
+             isCollidingEntityBoardDown(self.ball, self.board)):
+            self.ball.vel.y *= -1
 
-            # Baixo da bola < parte de baixo game
-            if self.ball.y + self.ball.sy < curses.LINES:
-                self.ball.vy = -self.ball.vy
+        if isCollidingEntityBoardLeft(self.ball, self.board):
+            self.player1.score += 1
+            self.ball.reset(self.board)
 
-            # Direira da bola > parte da direita game
-            if self.ball.x + self.ball.sx > curses.COLS - 2:
-                self.player1.score += 1
-                self.ball.reset()
-
-            # Esquerda da bola < parte da esquerda game
-            if self.ball.x - self.ball.sx < 2:
-                self.player2.score += 1
-                self.ball.reset()
+        if isCollidingEntityBoardRight(self.ball, self.board):
+            self.player2.score += 1
+            self.ball.reset(self.board)
 
     def render(self) -> None:
         self.stdscr.erase()
 
-        # Score
-        self.printScore()
+        utils.drawPanel(
+            self.stdscr,
+            self.panel,
+            self.player1, self.player2, "-", 0
+        )
 
         self.ball.render()
         self.player1.render()
         self.player2.render()
+
+        if self.pause:
+            utils.drawPauseMessage(self.stdscr, self.board)
 
         self.stdscr.refresh()
 
@@ -122,7 +166,8 @@ class Game:
         while self.state:
             self.input()
 
-            self.update()
+            if not self.pause:
+                self.update()
 
             self.render()
 
