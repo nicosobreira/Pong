@@ -8,17 +8,35 @@ from Window import Window
 
 class Player(Entity):
     def __init__(self,
-                 scr: int,
+                 scr,
                  KEYS: dict,
                  pos: Vector,
                  size: Vector,
-                 vel: Vector = Vector(5, 0),
+                 vel: Vector,
+                 score: int,
                  ch="*", color=0) -> None:
         super().__init__(scr, pos, size, vel, ch, color)
         
         self.KEYS = KEYS
 
-        self.score = 0
+        self.score = score
+
+    @classmethod
+    def new(cls,
+            scr,
+            KEYS: dict, 
+            x: int,
+            offset_x: int,
+            size_mult_y: int,
+            ball: Entity,
+            board: Window,
+            ch: str = "%", color: int = 2):
+        size = Vector(ball.size.x, ball.size.y * size_mult_y)
+        pos = Vector(x + offset_x, board.middle_y - size.y // 2)
+        score = 0
+        vel = Vector(5, 0)
+
+        return cls(scr, KEYS, pos, size, vel, score, ch, color)
 
     def input(self, board: Window) -> None:
         key = self.scr.getch()

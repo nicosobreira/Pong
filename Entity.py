@@ -1,9 +1,10 @@
-from Vector import Vector
-
 import utils
 
+from Vector import Vector
+
+
 class Entity:
-    def __init__(self, scr: int, pos: Vector, size: Vector, vel: Vector, ch: str, color: int) -> None:
+    def __init__(self, scr, pos: Vector, size: Vector, vel: Vector, ch: str, color: int) -> None:
         self.scr = scr
         self.pos = pos
         self.size = size

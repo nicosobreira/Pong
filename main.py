@@ -18,6 +18,9 @@ class Game:
     def __init__(self, stdscr: int) -> None:
         self.stdscr = stdscr
 
+        self.stdscr.nodelay(True)  # Se não tiver input o padrão é -1
+        self.stdscr.keypad(True)
+
         # Set new color (with rgb)
         if curses.can_change_color():
             curses.init_color(2, # Green
@@ -51,9 +54,6 @@ class Game:
 
         curses.set_escdelay(1)  # Pressionar ESC não "pausa" o jogo
 
-        self.stdscr.nodelay(True)  # Se não tiver input o padrão é -1
-        self.stdscr.keypad(True)
-
         # Game
         self.state = True
         self.pause = False
@@ -82,32 +82,22 @@ class Game:
         self.ball = Ball.spawn(self.stdscr, self.board, color=3)
 
         player_offset_x = 3
-        self.player1 = Player(
-            self.stdscr,
+        self.player1 = Player.new(self.stdscr,
             KEYS={"up": 119, "down": 115},
-            pos=Vector(
-                player_offset_x,
-                self.board.middle_y - self.ball.size.y * 3
-            ),
-            size=Vector(
-                self.ball.size.x,
-                self.ball.size.y * 3
-            ),
-            ch="%", color=2
+            x=0,
+            offset_x=3,
+            size_mult_y=3,
+            ball=self.ball,
+            board=self.board
         )
-
-        self.player2 = Player(
-            self.stdscr,
+        
+        self.player2 = Player.new(self.stdscr,
             KEYS={"up": curses.KEY_UP, "down": curses.KEY_DOWN},
-            pos=Vector(
-                self.board.right - self.ball.size.x - player_offset_x,
-                self.board.middle_y - self.ball.size.y * 3
-            ),
-            size=Vector(
-                self.ball.size.x,
-                self.ball.size.y * 3
-            ),
-            ch="%", color=2
+            x=self.board.right - self.ball.size.x,
+            offset_x=-3,
+            size_mult_y=3,
+            ball=self.ball,
+            board=self.board
         )
 
     def input(self) -> None:
@@ -166,8 +156,8 @@ class Game:
         while self.state:
             self.input()
 
-            if not self.pause:
-                self.update()
+            # if not self.pause:
+            self.update()
 
             self.render()
 

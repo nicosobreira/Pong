@@ -4,10 +4,10 @@ from Window import Window
 from Player import Player
 
 
-def addstr(scr: int, x: int, y: int, ch: str, color: int) -> None:
+def addstr(scr, x: int, y: int, ch: str, color: int) -> None:
     scr.addstr(y, x, ch, color_pair(color))
 
-def drawPanel(scr: int,
+def drawPanel(scr,
               panel: Window,
               player1: Player, player2: Player,
               ch: str = "-", color: int = 0) -> None:
@@ -18,19 +18,19 @@ def drawPanel(scr: int,
 
     drawLineX(scr, panel.left, panel.right, panel.down, ch, color)
 
-def drawPauseMessage(scr: int, board: Window):
+def drawPauseMessage(scr, board: Window):
     message = "PAUSE"
     addstr(scr, board.middle_x - len(message), board.middle_y, message, 0)
 
-def drawLineX(scr: int, x: int, sx: int, y: int, ch: str, color: int = 0) -> None:
+def drawLineX(scr, x: int, sx: int, y: int, ch: str, color: int = 0) -> None:
     for i in range(x, sx + x, 2):
         addstr(scr, i, y, ch, color)    
 
-def drawLineY(scr: int, x: int, y: int, sy: int, ch: str, color: int = 0) -> None:
+def drawLineY(scr, x: int, y: int, sy: int, ch: str, color: int = 0) -> None:
     for j in range(y, sy + x):
         addstr(scr, x, j, ch, color)    
 
-def drawRect(scr: int, x: int, y: int, sx: int, sy: int, ch: str, color: int = 0) -> None:
+def drawRect(scr, x: int, y: int, sx: int, sy: int, ch: str, color: int = 0) -> None:
     """ Draw a full rectangle
         * A coordenada em x tem que ser: x + (x-1)
     """
