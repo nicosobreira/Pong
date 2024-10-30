@@ -4,7 +4,7 @@ from Vector import Vector
 
 
 class Entity:
-    def __init__(self, scr, pos: Vector, size: Vector, vel: Vector, ch: str, color: int) -> None:
+    def __init__(self, scr, pos: Vector, size: Vector, vel: Vector, ch: str, color: int):
         self.scr = scr
         self.pos = pos
         self.size = size
@@ -13,7 +13,7 @@ class Entity:
         self.ch = ch
         self.color = color
 
-    def render(self) -> None:
+    def render(self):
         utils.drawRect(
             self.scr,
             self.pos.x, self.pos.y,

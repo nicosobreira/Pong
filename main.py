@@ -4,7 +4,6 @@ import time
 import utils
 from collision import *
 
-from Vector import Vector
 from Ball import Ball
 from Player import Player
 from Window import Window
@@ -63,7 +62,6 @@ class Game:
 
         self.ball = Ball.new(self.stdscr, self.board, color=3)
 
-        player_offset_x = 3
         self.player1 = Player.new(self.stdscr,
             KEYS={"up": 119, "down": 115},
             x=0,
@@ -82,7 +80,7 @@ class Game:
             board=self.board
         )
 
-    def input(self) -> None:
+    def input(self):
         key = self.stdscr.getch()
         if key == self.KEYS["quit"]:
             self.state = False
@@ -118,7 +116,7 @@ class Game:
         #     self.player1.score += 1
         #     self.ball.reset(self.board)
 
-    def render(self) -> None:
+    def render(self):
         self.stdscr.erase()
 
         utils.drawPanel(
@@ -136,7 +134,7 @@ class Game:
 
         self.stdscr.refresh()
 
-    def loop(self) -> None:
+    def loop(self):
         previous = time.time()
         lag = 0
         while self.state:
@@ -158,7 +156,7 @@ class Game:
             # curses.napms(1000 // self.TICKRATE)
 
 
-def main(stdscr) -> None:
+def main(stdscr):
     game = Game(stdscr)
     game.loop()
 

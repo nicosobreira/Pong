@@ -1,4 +1,3 @@
-import utils
 from collision import *
 
 from Vector import Vector
@@ -14,7 +13,7 @@ class Player(Entity):
                  size: Vector,
                  vel: Vector,
                  score: int,
-                 ch="*", color=0) -> None:
+                 ch="*", color=0):
         super().__init__(scr, pos, size, vel, ch, color)
         self.KEYS = KEYS
         self.score = score
@@ -36,12 +35,12 @@ class Player(Entity):
 
         return cls(scr, KEYS, pos, size, vel, score, ch, color)
 
-    def input(self, key, board: Window) -> None:
-        if ( key == self.KEYS["up"] and
-             isCollidingEntityBoardUp(self, board)):
+    def input(self, key: int, board: Window):
+        if (    key == self.KEYS["up"] and
+                isCollidingEntityBoardUp(self, board)):
             self.pos.y -= self.vel.y
-        if ( key == self.KEYS["down"] and
-             isCollidingEntityBoardDown(self, board)):
+        if (    key == self.KEYS["down"] and
+                isCollidingEntityBoardDown(self, board)):
             self.pos.y += self.vel.y
 
     # def render(self):
