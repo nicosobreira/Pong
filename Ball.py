@@ -16,10 +16,11 @@ class Ball(Entity):
         super().__init__(scr, pos, size, vel, ch, color)
 
     @classmethod
-    def spawn(cls, scr, board: Window, ch: str = "o", color: int = 0) -> None:
+    def new(cls, scr, board: Window, ch: str = "o", color: int = 0) -> None:
         pos = Vector(board.middle_x, board.middle_y)
         size = Vector(3, 2)
         vel = Vector(1, 2)
+
         return cls(scr, pos, size, vel, ch, color)
 
     def reset(self, board: Window) -> None:
@@ -31,5 +32,5 @@ class Ball(Entity):
         self.pos.x += self.vel.x
         self.pos.y += self.vel.y
 
-    def render(self) -> None:
-        super().render()
+    # def render(self) -> None:
+    #     super().render()

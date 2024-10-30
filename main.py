@@ -40,7 +40,7 @@ class Game:
         self.state = True
         self.pause = False
 
-        self.TICKRATE = 50
+        self.TICKRATE = 1000 / 60
 
         self.KEYS = {
             "quit": 113, # q
@@ -61,7 +61,7 @@ class Game:
             down=curses.LINES
         )
 
-        self.ball = Ball.spawn(self.stdscr, self.board, color=3)
+        self.ball = Ball.new(self.stdscr, self.board, color=3)
 
         player_offset_x = 3
         self.player1 = Player.new(self.stdscr,
@@ -137,16 +137,25 @@ class Game:
         self.stdscr.refresh()
 
     def loop(self) -> None:
+        previous = time.time()
+        lag = 0
         while self.state:
+            current = time.time()
+            elapsed = current - previous
+            previous = current
+            lag += elapsed
+
             self.input()
 
-            if not self.pause:
+            while lag >= self.TICKRATE:
+                # if not self.pause:
                 self.update()
+                lag -= self.TICKRATE
 
             self.render()
 
             # curses.flushinp()  # Faz com que os inputs não se "arrastem"
-            curses.napms(1000 // self.TICKRATE)
+            # curses.napms(1000 // self.TICKRATE)
 
 
 def main(stdscr) -> None:

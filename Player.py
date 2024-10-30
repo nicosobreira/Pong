@@ -44,5 +44,5 @@ class Player(Entity):
              isCollidingEntityBoardDown(self, board)):
             self.pos.y += self.vel.y
 
-    def render(self):
-        super().render()
+    # def render(self):
+    #     super().render()
