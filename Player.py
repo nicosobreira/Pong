@@ -16,9 +16,7 @@ class Player(Entity):
                  score: int,
                  ch="*", color=0) -> None:
         super().__init__(scr, pos, size, vel, ch, color)
-        
         self.KEYS = KEYS
-
         self.score = score
 
     @classmethod
@@ -38,12 +36,10 @@ class Player(Entity):
 
         return cls(scr, KEYS, pos, size, vel, score, ch, color)
 
-    def input(self, board: Window) -> None:
-        key = self.scr.getch()
+    def input(self, key, board: Window) -> None:
         if ( key == self.KEYS["up"] and
              isCollidingEntityBoardUp(self, board)):
             self.pos.y -= self.vel.y
-        key = self.scr.getch()
         if ( key == self.KEYS["down"] and
              isCollidingEntityBoardDown(self, board)):
             self.pos.y += self.vel.y

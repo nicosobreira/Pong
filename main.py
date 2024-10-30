@@ -11,48 +11,30 @@ from Window import Window
 
 
 def convertRgb(rgb) -> int:
+    """ Converts 255 to 1000 rgb
+    """
     return rgb * 1000 // 255
 
 
 class Game:
-    def __init__(self, stdscr: int) -> None:
+    def __init__(self, stdscr) -> None:
         self.stdscr = stdscr
 
-        self.stdscr.nodelay(True)  # Se não tiver input o padrão é -1
-        self.stdscr.keypad(True)
-
-        # Set new color (with rgb)
-        if curses.can_change_color():
-            curses.init_color(2, # Green
-                convertRgb(32),
-                convertRgb(227),
-                convertRgb(178),
-            )
-            curses.init_color(3, # Orange
-                convertRgb(237),
-                convertRgb(171),
-                convertRgb(101)
-            )
-            curses.init_color(4, # Blue
-                convertRgb(44),
-                convertRgb(203),
-                convertRgb(254)
-            )
-        
         # Color pairs
         if curses.has_colors():
             curses.use_default_colors()
             
             # Color pairs
-            curses.init_pair(1, 2, -1)  # Green
-            curses.init_pair(2, 3, -1)  # Yellow
-            curses.init_pair(3, 4, -1)  # Blue
+            curses.init_pair(1, curses.COLOR_GREEN, -1)  # Green
+            curses.init_pair(2, curses.COLOR_YELLOW, -1)  # Yellow
+            curses.init_pair(3, curses.COLOR_BLUE, -1)  # Blue
 
         curses.noecho()  # Não exibe os inputs
         # curses.cbreak()
         curses.curs_set(0)  # Não mostra o cursor
 
-        curses.set_escdelay(1)  # Pressionar ESC não "pausa" o jogo
+        self.stdscr.nodelay(True)  # Se não tiver input o padrão é -1
+        self.stdscr.keypad(True)
 
         # Game
         self.state = True
@@ -109,30 +91,32 @@ class Game:
             self.pause = not self.pause
 
     def update(self) -> None:
-        self.player1.input(self.board)
-        self.player2.input(self.board)
+        key = self.stdscr.getch()
+        self.player1.input(key, self.board)
+        key = self.stdscr.getch()
+        self.player2.input(key, self.board)
         
         self.ball.update()
 
         # Colisão bola e jogador 1
-        if isCollidingEntityX(self.ball, self.player1):
-            self.ball.vel.x *= -1
+        # if isCollidingEntityLeftRight(self.ball, self.player1):
+        #     self.ball.vel.x *= -1
 
         # Colisão bola e jogador 2
-        if isCollidingEntityX(self.ball, self.player2):
-            self.ball.vel.x *= -1
+        # if isCollidingEntityRightLeft(self.ball, self.player2):
+        #     self.ball.vel.x *= -1
 
-        if ( isCollidingEntityBoardUp(self.ball, self.board) or
-             isCollidingEntityBoardDown(self.ball, self.board)):
-            self.ball.vel.y *= -1
+        # if (    isCollidingEntityBoardUp(self.ball, self.board) or
+        #         isCollidingEntityBoardDown(self.ball, self.board)):
+        #     self.ball.vel.y *= -1
 
-        if isCollidingEntityBoardLeft(self.ball, self.board):
-            self.player1.score += 1
-            self.ball.reset(self.board)
+        # if isCollidingEntityBoardLeft(self.ball, self.board):
+        #     self.player2.score += 1
+        #     self.ball.reset(self.board)
 
-        if isCollidingEntityBoardRight(self.ball, self.board):
-            self.player2.score += 1
-            self.ball.reset(self.board)
+        # if isCollidingEntityBoardRight(self.ball, self.board):
+        #     self.player1.score += 1
+        #     self.ball.reset(self.board)
 
     def render(self) -> None:
         self.stdscr.erase()
@@ -140,7 +124,7 @@ class Game:
         utils.drawPanel(
             self.stdscr,
             self.panel,
-            self.player1, self.player2, "-", 0
+            self.player1, self.player2, "-", 2
         )
 
         self.ball.render()
@@ -156,13 +140,13 @@ class Game:
         while self.state:
             self.input()
 
-            # if not self.pause:
-            self.update()
+            if not self.pause:
+                self.update()
 
             self.render()
 
-            curses.flushinp()  # Faz com que os inputs não se "arrastem"
-            curses.napms(self.TICKRATE)
+            # curses.flushinp()  # Faz com que os inputs não se "arrastem"
+            curses.napms(1000 // self.TICKRATE)
 
 
 def main(stdscr) -> None:

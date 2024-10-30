@@ -13,7 +13,7 @@ def drawPanel(scr,
               ch: str = "-", color: int = 0) -> None:
     drawLineX(scr, panel.left, panel.right, panel.up, ch, color)
     
-    score_text = f"{player1.score | player2.score}"
+    score_text = f"{player1.score} | {player2.score}"
     addstr(scr, panel.middle_x - len(score_text), panel.middle_y, ch, color)
 
     drawLineX(scr, panel.left, panel.right, panel.down, ch, color)

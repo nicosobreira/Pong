@@ -4,12 +4,15 @@ from Entity import Entity
 from Window import Window
 
 
-def isCollidingEntityX(ent_a: Entity, ent_b: Entity) -> bool:
+def isCollidingEntityLeftRight(ent_a: Entity, ent_b: Entity) -> bool:
     if (    ent_a.pos.x < ent_b.pos.x + ent_b.size.x and # Esquerda < direita
             ent_a.pos.y + ent_a.size.y > ent_b.pos.y and # Baixo > cima
             ent_a.pos.y < ent_b.pos.y + ent_b.size.y): # Cima < baixo
         return True
-    elif (  ent_a.pos.x > ent_b.pos.x - ent_b.size.x and # Direita > esquerda
+    return False
+
+def isCollidingEntityRightLeft(ent_a: Entity, ent_b: Entity) -> bool:
+    if (    ent_a.pos.x + ent_a.size.x > ent_b.pos.x and # Direita > esquerda
             ent_a.pos.y + ent_a.size.y > ent_b.pos.y and # Baixo > cima
             ent_a.pos.y < ent_b.pos.y + ent_b.size.y): # Cima < baixo
         return True
