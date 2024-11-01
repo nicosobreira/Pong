@@ -9,11 +9,10 @@ from Player import Player
 from Window import Window
 
 
-def convertRgb(rgb) -> int:
-    """ Converts 255 to 1000 rgb
-    """
-    return rgb * 1000 // 255
-
+# TODO Refatorar o código das colisões
+#    * A colisão da bola e player usando lógicas diferentes
+# TODO Ver se valhe apena criar uma classe "Score" ou uma função
+# TODO Resolver o problema dos inputs (eles estão meio lentos)
 
 class Game:
     def __init__(self, stdscr) -> None:
