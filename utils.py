@@ -1,34 +1,41 @@
-from curses import color_pair
+import curses
 
 from Window import Window
 from Player import Player
 
 
 def addstr(scr, x: int, y: int, ch: str, color: int) -> None:
-    scr.addstr(y, x, ch, color_pair(color))
+    if x > curses.COLS or x < 0:
+        raise ValueError(f"The x coordinates: {x} is out of bound")
+    if y > curses.LINES or y < 0:
+        raise ValueError(f"The y coordinates: {y} is out of bound")
+    scr.addstr(y, x, ch, curses.color_pair(color))
 
-def drawPanel(scr,
-              panel: Window,
-              player1: Player, player2: Player,
-              ch: str = "-", color: int = 0) -> None:
-    drawLineX(scr, panel.left, panel.right, panel.up, ch, color)
+
+def drawPanel(
+    scr,
+    panel: Window,
+    player1: Player, player2: Player,
+    chs: dict[str, str] = {"hor": "-", "ver": "|"},
+    color: int = 0
+) -> None:
+    drawLineX(scr, panel.left, panel.up, panel.right, chs["hor"], color)
+    drawLineX(scr, panel.left, panel.down, panel.right, chs["hor"], color)
+    # drawLineY(scr, panel.left, panel.up + 1, panel.down, chs["ver"], color)
     
     score_text = f"{player1.score} | {player2.score}"
-    addstr(scr, panel.middle_x - len(score_text), panel.middle_y, ch, color)
+    addstr(scr, panel.middle_x - len(score_text), panel.middle_y, score_text, 0)
 
-    drawLineX(scr, panel.left, panel.right, panel.down, ch, color)
 
-def drawPauseMessage(scr, board: Window):
-    message = "PAUSE"
-    addstr(scr, board.middle_x - len(message), board.middle_y, message, 0)
-
-def drawLineX(scr, x: int, sx: int, y: int, ch: str, color: int = 0) -> None:
+def drawLineX(scr, x: int, y: int, sx: int, ch: str, color: int = 0) -> None:
     for i in range(x, sx + x, 2):
         addstr(scr, i, y, ch, color)    
+
 
 def drawLineY(scr, x: int, y: int, sy: int, ch: str, color: int = 0) -> None:
     for j in range(y, sy + x):
         addstr(scr, x, j, ch, color)    
+
 
 def drawRect(scr, x: int, y: int, sx: int, sy: int, ch: str, color: int = 0) -> None:
     """ Draw a full rectangle

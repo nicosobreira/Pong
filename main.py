@@ -24,12 +24,12 @@ class Game:
             curses.use_default_colors()
             
             # Color pairs
-            curses.init_pair(1, curses.COLOR_GREEN, -1)  # Green
-            curses.init_pair(2, curses.COLOR_YELLOW, -1)  # Yellow
-            curses.init_pair(3, curses.COLOR_BLUE, -1)  # Blue
+            curses.init_pair(1, curses.COLOR_MAGENTA, -1)
+            curses.init_pair(2, curses.COLOR_YELLOW, -1)
+            curses.init_pair(3, curses.COLOR_BLUE, -1)
 
         curses.noecho()  # Não exibe os inputs
-        # curses.cbreak()
+        curses.cbreak()
         curses.curs_set(0)  # Não mostra o cursor
 
         self.stdscr.nodelay(True)  # Se não tiver input o padrão é -1
@@ -38,15 +38,16 @@ class Game:
         # Game
         self.state = True
         self.pause = False
+        self.pause_message = "PAUSE"
 
-        self.TICKRATE = 1000 / 60
+        self.FRAME_TIME = 1000 / 18
 
         self.KEYS = {
             "quit": 113, # q
             "pause": 112 # p
         }
 
-        self.panel = Window(
+        self.score = Window(
             left=0,
             right=curses.COLS,
             up=0,
@@ -54,106 +55,115 @@ class Game:
         )
 
         self.board = Window(
-            left=self.panel.left,
-            right=self.panel.right,
-            up=self.panel.down,
+            left=self.score.left,
+            right=self.score.right,
+            up=self.score.down,
             down=curses.LINES
         )
 
         self.ball = Ball.new(self.stdscr, self.board, color=3)
 
-        self.player1 = Player.new(self.stdscr,
+        self.player1 = Player.new(
+            self.stdscr,
             KEYS={"up": 119, "down": 115},
             x=0,
-            offset_x=3,
+            offset_x=0,
             size_mult_y=3,
             ball=self.ball,
             board=self.board
         )
         
-        self.player2 = Player.new(self.stdscr,
+        self.player2 = Player.new(
+            self.stdscr,
             KEYS={"up": curses.KEY_UP, "down": curses.KEY_DOWN},
             x=self.board.right - self.ball.size.x,
-            offset_x=-3,
+            offset_x=-0,
             size_mult_y=3,
             ball=self.ball,
             board=self.board
         )
 
-    def input(self):
-        key = self.stdscr.getch()
+    def input(self, key):
         if key == self.KEYS["quit"]:
             self.state = False
-        key = self.stdscr.getch()
         if key == self.KEYS["pause"]:
             self.pause = not self.pause
+        self.player1.input(key, self.board)
+        self.player2.input(key, self.board)
 
     def update(self) -> None:
-        key = self.stdscr.getch()
-        self.player1.input(key, self.board)
-        key = self.stdscr.getch()
-        self.player2.input(key, self.board)
-        
         self.ball.update()
 
         # Colisão bola e jogador 1
-        # if isCollidingEntityLeftRight(self.ball, self.player1):
-        #     self.ball.vel.x *= -1
+        if isCollidingEntityLeftRight(self.ball, self.player1):
+            self.ball.vel.x *= -1
 
         # Colisão bola e jogador 2
-        # if isCollidingEntityRightLeft(self.ball, self.player2):
-        #     self.ball.vel.x *= -1
+        if isCollidingEntityRightLeft(self.ball, self.player2):
+            self.ball.vel.x *= -1
 
-        # if (    isCollidingEntityBoardUp(self.ball, self.board) or
-        #         isCollidingEntityBoardDown(self.ball, self.board)):
-        #     self.ball.vel.y *= -1
+        if isCollidingEntityBoardUp(self.ball, self.board):
+            self.ball.vel.y *= -1
 
-        # if isCollidingEntityBoardLeft(self.ball, self.board):
-        #     self.player2.score += 1
-        #     self.ball.reset(self.board)
+        if isCollidingEntityBoardDown(self.ball, self.board):
+            self.ball.vel.y *= -1
 
-        # if isCollidingEntityBoardRight(self.ball, self.board):
-        #     self.player1.score += 1
-        #     self.ball.reset(self.board)
+        if isCollidingEntityBoardLeft(self.ball, self.board):
+            self.player2.score += 1
+            self.ball.reset(self.board)
+
+        if isCollidingEntityBoardRight(self.ball, self.board):
+            self.player1.score += 1
+            self.ball.reset(self.board)
 
     def render(self):
         self.stdscr.erase()
 
         utils.drawPanel(
             self.stdscr,
-            self.panel,
-            self.player1, self.player2, "-", 2
+            self.score,
+            self.player1,
+            self.player2,
+            color=1
         )
 
-        self.ball.render()
-        self.player1.render()
-        self.player2.render()
-
+        objects = sorted(
+            [self.ball, self.player1, self.player2],
+            key=lambda obj: obj.pos.x)
+        for obj in objects:
+            obj.render()
+        
         if self.pause:
-            utils.drawPauseMessage(self.stdscr, self.board)
+            utils.addstr(
+                self.stdscr,
+                self.board.middle_x - len(self.pause_message),
+                self.board.middle_y,
+                self.pause_message,
+                0
+            )
 
         self.stdscr.refresh()
 
     def loop(self):
         previous = time.time()
-        lag = 0
         while self.state:
             current = time.time()
             elapsed = current - previous
-            previous = current
-            lag += elapsed
 
-            self.input()
+            key = self.stdscr.getch()
+            self.input(key)
 
-            while lag >= self.TICKRATE:
-                # if not self.pause:
+            if not self.pause:
                 self.update()
-                lag -= self.TICKRATE
 
             self.render()
+            
+            curses.flushinp()  # Faz com que os inputs não se "arrastem"
+            
+            if elapsed < self.FRAME_TIME:
+                curses.napms(round(self.FRAME_TIME - elapsed))
+            previous = time.time()
 
-            # curses.flushinp()  # Faz com que os inputs não se "arrastem"
-            # curses.napms(1000 // self.TICKRATE)
 
 
 def main(stdscr):
