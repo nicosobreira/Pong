@@ -27,8 +27,15 @@ class Ball(Entity):
         )
 
     @classmethod
-    def new(cls, scr, board: Window, ch: str = "o", color: int = 0):
-        size = Vector(3, 2)
+    def new(
+            cls,
+            scr,
+            sx: int,
+            sy: int,
+            board: Window,
+            ch: str,
+            color: int = 0):
+        size = Vector(sx, sy)
         pos = Vector(board.middle_x, board.middle_y)
         vel = cls.randomVelocity()
 

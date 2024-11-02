@@ -12,7 +12,6 @@ from Window import Window
 # TODO Refatorar o código das colisões
 #    * A colisão da bola e player usando lógicas diferentes
 # TODO Ver se valhe apena criar uma classe "Score" ou uma função
-# TODO Resolver o problema dos inputs (eles estão meio lentos)
 
 class Game:
     def __init__(self, stdscr) -> None:
@@ -27,9 +26,9 @@ class Game:
             curses.init_pair(2, curses.COLOR_YELLOW, -1)
             curses.init_pair(3, curses.COLOR_BLUE, -1)
 
-        curses.noecho()  # Não exibe os inputs
-        curses.cbreak()
+        # curses.noecho()  # Não exibe os inputs
         curses.curs_set(0)  # Não mostra o cursor
+        # curses.cbreak()
 
         self.stdscr.nodelay(True)  # Se não tiver input o padrão é -1
         self.stdscr.keypad(True)
@@ -43,14 +42,14 @@ class Game:
 
         self.KEYS = {
             "quit": 113, # q
-            "pause": 112 # p
+            "pause": 112, # p
         }
 
         self.score = Window(
-            left=0,
-            right=curses.COLS,
-            up=0,
-            down=2
+            left=curses.COLS // 2 - 40,
+            right=curses.COLS // 2 + 40,
+            up=3,
+            down=5
         )
 
         self.board = Window(
@@ -60,27 +59,38 @@ class Game:
             down=curses.LINES
         )
 
-        self.ball = Ball.new(self.stdscr, self.board, color=3)
+        self.ball = Ball.new(
+            scr=self.stdscr,
+            sx=1,
+            sy=1,
+            board=self.board,
+            ch="o",
+            color=3)
 
         self.player1 = Player.new(
-            self.stdscr,
+            scr=self.stdscr,
             KEYS={"up": 119, "down": 115},
-            x=0,
+            x=self.board.left,
             offset_x=0,
-            size_mult_y=3,
+            size_mult_y=5,
             ball=self.ball,
-            board=self.board
+            board=self.board,
+            ch="%",
+            color=2
         )
         
         self.player2 = Player.new(
-            self.stdscr,
+            scr=self.stdscr,
             KEYS={"up": curses.KEY_UP, "down": curses.KEY_DOWN},
             x=self.board.right - self.ball.size.x,
             offset_x=-0,
-            size_mult_y=3,
+            size_mult_y=5,
             ball=self.ball,
-            board=self.board
+            board=self.board,
+            ch="%",
+            color=2
         )
+        self.objects = [self.ball, self.player1, self.player2]
 
     def input(self, key):
         if key == self.KEYS["quit"]:
@@ -127,7 +137,7 @@ class Game:
         )
 
         objects = sorted(
-            [self.ball, self.player1, self.player2],
+            self.objects,
             key=lambda obj: obj.pos.x)
         for obj in objects:
             obj.render()

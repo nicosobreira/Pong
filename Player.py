@@ -33,8 +33,8 @@ class Player(Entity):
         size_mult_y: int,
         ball: Entity,
         board: Window,
-        ch: str = "%",
-        color: int = 2
+        ch: str,
+        color: int
     ):
         size = Vector(ball.size.x, ball.size.y * size_mult_y)
         pos = Vector(x + offset_x, board.middle_y - size.y // 2)

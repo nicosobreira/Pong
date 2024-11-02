@@ -5,5 +5,5 @@ class Window:
         self.up = up
         self.down = down
 
-        self.middle_x = round(self.right / 2)
-        self.middle_y = round(self.down / 2)
+        self.middle_x = round((self.right + self.left) / 2)
+        self.middle_y = round((self.down + self.up) / 2)
