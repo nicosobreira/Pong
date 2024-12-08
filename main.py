@@ -20,7 +20,7 @@ class Game:
         # Color pairs
         if curses.has_colors():
             curses.use_default_colors()
-            
+
             # Color pairs
             curses.init_pair(1, curses.COLOR_MAGENTA, -1)
             curses.init_pair(2, curses.COLOR_YELLOW, -1)
@@ -46,8 +46,8 @@ class Game:
         }
 
         self.score = Window(
-            left=curses.COLS // 2 - 40,
-            right=curses.COLS // 2 + 40,
+            left=0,
+            right=curses.COLS,
             up=3,
             down=5
         )
@@ -78,7 +78,7 @@ class Game:
             ch="%",
             color=2
         )
-        
+
         self.player2 = Player.new(
             scr=self.stdscr,
             KEYS={"up": curses.KEY_UP, "down": curses.KEY_DOWN},
@@ -101,6 +101,8 @@ class Game:
         self.player2.input(key, self.board)
 
     def update(self) -> None:
+        key = self.stdscr.getch()
+        self.input(key)
         self.ball.update()
 
         # Colisão bola e jogador 1
@@ -141,7 +143,7 @@ class Game:
             key=lambda obj: obj.pos.x)
         for obj in objects:
             obj.render()
-        
+
         if self.pause:
             utils.addstr(
                 self.stdscr,
@@ -159,16 +161,14 @@ class Game:
             current = time.time()
             elapsed = current - previous
 
-            key = self.stdscr.getch()
-            self.input(key)
 
             if not self.pause:
                 self.update()
 
             self.render()
-            
+
             curses.flushinp()  # Faz com que os inputs não se "arrastem"
-            
+
             if elapsed < self.FRAME_TIME:
                 curses.napms(round(self.FRAME_TIME - elapsed))
             previous = time.time()
